@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { View, TextInput, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface AccessCodeInputProps {
   value: string;

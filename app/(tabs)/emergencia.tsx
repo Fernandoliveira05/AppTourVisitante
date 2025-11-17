@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginTop: 40,
-    marginBottom: 40,
+    marginBottom: 20,
   },
   logo: {
     width: 120,
@@ -89,7 +89,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 40,
-    paddingBottom: 120, // Espaço para a navbar
+    paddingBottom: 60, // Espaço para a navbar
+    marginTop: -40, // Move o conteúdo para cima
   },
   buttonCircle: {
     width: 280,
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   description: {
-    fontSize: 18,
+    fontSize: 24,
     color: "#FFFFFF",
     textAlign: "center",
     lineHeight: 28,

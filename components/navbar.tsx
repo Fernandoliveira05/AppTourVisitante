@@ -23,7 +23,10 @@ export default function Navbar() {
   return (
     <View style={styles.container}>
       <BlurView intensity={80} tint="dark" style={styles.bar}>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => router.push("/(tabs)/mapa")}
+        >
           <Ionicons name="map-outline" size={28} color="#fff" />
         </TouchableOpacity>
 
@@ -35,7 +38,9 @@ export default function Navbar() {
         </TouchableOpacity>
         
         <View style={styles.centerButton}>
-          <TouchableOpacity style={styles.micButton}>
+          <TouchableOpacity style={styles.micButton}
+          onPress={() => router.push("/(tabs)/home")}
+          >
             {IconeCentro} {/* aqui vai o componente, não a string */}
           </TouchableOpacity>
         </View>

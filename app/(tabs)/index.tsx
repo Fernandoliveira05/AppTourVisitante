@@ -1,17 +1,16 @@
-import { Image } from "expo-image";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { useFonts } from "@expo-google-fonts/manrope/useFonts";
-import { usePathname, router } from "expo-router";
 import { Manrope_700Bold } from "@expo-google-fonts/manrope/700Bold";
+import { useFonts } from "@expo-google-fonts/manrope/useFonts";
+import { Image } from "expo-image";
+import { router, usePathname } from "expo-router";
 import { useState } from "react";
-import Casinhas from "../../assets/images/Login/Casinhas.jpg";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Auditorio from "../../assets/images/Login/Auditório.jpg";
+import Casinhas from "../../assets/images/Login/Casinhas.jpg";
 import Frente from "../../assets/images/Login/Frente.jpg";
 import Letreiro from "../../assets/images/Login/Letreiro.jpeg";
 import Pessoas from "../../assets/images/Login/Pessoas.jpeg";
 import Refeitorio from "../../assets/images/Login/Refeitorio.jpg";
 import Logo from "../../assets/images/logo-branca.png";
-import Navbar from "../../components/navbar"
 import AccessCodeInput from "../../components/code";
 
 function randomPhoto(max) {
