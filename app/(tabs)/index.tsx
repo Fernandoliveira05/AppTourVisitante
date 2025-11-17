@@ -1,8 +1,9 @@
 import { Image } from "expo-image";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useFonts } from "@expo-google-fonts/manrope/useFonts";
-import { usePathname } from "expo-router";
+import { usePathname, router } from "expo-router";
 import { Manrope_700Bold } from "@expo-google-fonts/manrope/700Bold";
+import { useState } from "react";
 import Casinhas from "../../assets/images/Login/Casinhas.jpg";
 import Auditorio from "../../assets/images/Login/Auditório.jpg";
 import Frente from "../../assets/images/Login/Frente.jpg";
@@ -23,9 +24,20 @@ const photo = photos[numberRandom];
 
 export default function HomeScreen() {
   const pathname = usePathname();
+  const [code, setCode] = useState("");
+  
   let [fontsLoaded] = useFonts({
     Manrope_700Bold,
   });
+
+  const handleLogin = () => {
+    if (code.toUpperCase() === "FER") {
+      router.push("/(tabs)/onboarding");
+    } else {
+      Alert.alert("❌ Código incorreto", "Por favor, verifique o código de acesso.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image
@@ -43,9 +55,9 @@ export default function HomeScreen() {
             contentFit="contain"
             transition={1000}
           />
-          <AccessCodeInput />
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.button}>Entrar</Text>
+          <AccessCodeInput value={code} onChangeText={setCode} />
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Entrar</Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </View>
@@ -85,7 +97,6 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#8141C2",
-    color: "#fff",
     borderRadius: 20,
     width: "32%",
     height: "25%",
@@ -93,6 +104,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
+  },
+  buttonText: {
+    color: "#fff",
     fontFamily: "Manrope_700Bold",
   },
 });

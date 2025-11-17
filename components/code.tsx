@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { View, TextInput, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import React, { useState } from "react";
+import { View, TextInput, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router"; 
 
-export default function AccessCodeInput() {
+interface AccessCodeInputProps {
+  value: string;
+  onChangeText: (text: string) => void;
+}
+
+export default function AccessCodeInput({ value, onChangeText }: AccessCodeInputProps) {
   const [secureText, setSecureText] = useState(true);
-  const [value, setValue] = useState("");
-
-  useEffect(() => {
-    if (value.toUpperCase() === "FER") {
-      Alert.alert("✅ Código correto", "Bem-vindo, FER!", [
-        { onPress: () => router.push("/(tabs)/onboarding") },
-      ]);
-      console.log("PASSOU!")
-    }
-  }, [value]);
 
   return (
     <View style={styles.container}>
@@ -27,7 +21,7 @@ export default function AccessCodeInput() {
           style={styles.input}
           secureTextEntry={secureText}
           value={value}
-          onChangeText={setValue}
+          onChangeText={onChangeText}
           autoCapitalize="characters"
           placeholder=""
           placeholderTextColor="#ccc"
