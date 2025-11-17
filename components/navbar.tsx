@@ -1,18 +1,23 @@
-import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { BlurView } from "expo-blur";
-import { Ionicons, MaterialIcons, Entypo, FontAwesome5 } from "@expo/vector-icons";
-import { usePathname } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const isHome = pathname === "/(tabs)/home";
+  const router = useRouter();
+  
+  console.log("Current pathname:", pathname);
+  
+  const isHome = pathname === "/home";
 
   // define o ícone central uma vez, fora do JSX
   const IconeCentro = isHome ? (
-    <Ionicons name="mic-outline" size={38} color="#fff" />
-  ) : (
     <Ionicons name="home" size={38} color="#fff" />
+  ) : (
+    <Ionicons name="mic-outline" size={38} color="#fff" />
   );
 
   return (
@@ -22,8 +27,11 @@ export default function Navbar() {
           <Ionicons name="map-outline" size={28} color="#fff" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.iconButton}>
-          <MaterialIcons name="emergency" size={28} color="#fff" />
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => router.push("/(tabs)/emergencia")}
+        >
+          <AntDesign name="alert" size={28} color="#fff" />
         </TouchableOpacity>
         
         <View style={styles.centerButton}>
