@@ -9,6 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "O app precisa acessar o microfone para reagir à sua voz."
+      },
       "supportsTablet": true
     },
     "android": {
@@ -45,6 +48,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "androidNavigationBar": {
+      "visible": "sticky-immersive",
+      "backgroundColor": "#1E1730",
+      "barStyle": "light-content"
     }
   }
 }

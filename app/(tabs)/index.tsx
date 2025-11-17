@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useFonts } from "@expo-google-fonts/manrope/useFonts";
+import { usePathname } from "expo-router";
 import { Manrope_700Bold } from "@expo-google-fonts/manrope/700Bold";
 import Casinhas from "../../assets/images/Login/Casinhas.jpg";
 import Auditorio from "../../assets/images/Login/Auditório.jpg";
@@ -21,6 +22,7 @@ const numberRandom = randomPhoto(photos.length);
 const photo = photos[numberRandom];
 
 export default function HomeScreen() {
+  const pathname = usePathname();
   let [fontsLoaded] = useFonts({
     Manrope_700Bold,
   });

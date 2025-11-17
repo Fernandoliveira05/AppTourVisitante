@@ -2,8 +2,19 @@ import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons, MaterialIcons, Entypo, FontAwesome5 } from "@expo/vector-icons";
+import { usePathname } from "expo-router";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isHome = pathname === "/(tabs)/home";
+
+  // define o ícone central uma vez, fora do JSX
+  const IconeCentro = isHome ? (
+    <Ionicons name="mic-outline" size={38} color="#fff" />
+  ) : (
+    <Ionicons name="home" size={38} color="#fff" />
+  );
+
   return (
     <View style={styles.container}>
       <BlurView intensity={80} tint="dark" style={styles.bar}>
@@ -14,10 +25,10 @@ export default function Navbar() {
         <TouchableOpacity style={styles.iconButton}>
           <MaterialIcons name="emergency" size={28} color="#fff" />
         </TouchableOpacity>
-
+        
         <View style={styles.centerButton}>
           <TouchableOpacity style={styles.micButton}>
-            <Ionicons name="mic-outline" size={38} color="#fff" />
+            {IconeCentro} {/* aqui vai o componente, não a string */}
           </TouchableOpacity>
         </View>
 
@@ -63,7 +74,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
-    zIndex: 1, 
+    zIndex: 1,
   },
   micButton: {
     width: 150,
