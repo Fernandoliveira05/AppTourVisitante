@@ -10,7 +10,7 @@ export default function AccessCodeInput() {
   useEffect(() => {
     if (value.toUpperCase() === "FER") {
       Alert.alert("✅ Código correto", "Bem-vindo, FER!", [
-        { onPress: () => router.push("/(tabs)/home") },
+        { onPress: () => router.push("/(tabs)/onboarding") },
       ]);
       console.log("PASSOU!")
     }
