@@ -2,6 +2,7 @@ import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import Logo from "../../assets/images/logo-branca.png";
 import CardTutorial from "../../components/card_tutorial";
 
@@ -11,15 +12,19 @@ export default function Home() {
   const steps = [
     {
       text: "Em casos de emergência, você pode solicitar ajuda através desse mesmo aplicativo.",
-      image: require("../../assets/images/botao_emergencia.png"),
+      image: require("../../assets/images/onboarding_emergencia.png"),
     },
     {
-      text: "Certifique-se de estar conectado à internet para enviar o pedido de ajuda.",
-      image: require("../../assets/images/botao_emergencia.png"),
+      text: "Mantenha uma distância segura de no mínimo 2 metros do robô.",
+      image: require("../../assets/images/onboarding_distancia.png"),
     },
     {
-      text: "Nossa equipe responderá o mais rápido possível.",
-      image: require("../../assets/images/botao_emergencia.png"),
+      text: "Você pode tirar suas dúvidas por áudio através desse aplicativo, essas serão respondidas pela LIA ao final de cada etapa.",
+      image: require("../../assets/images/onboarding_fala.png"),
+    },
+    {
+      text: "Ao final de cada etapa do tour, confirmaremos se você deseja prosseguir para a próxima. Basta clicar no ícone destacado abaixo para prosseguir",
+      icon: true,
     },
   ];
 
@@ -50,6 +55,13 @@ export default function Home() {
           <CardTutorial
             text={steps[currentStep].text}
             image={steps[currentStep].image}
+            icon={
+              steps[currentStep].icon ? (
+                <View style={styles.iconCircle}>
+                  <Ionicons name="checkmark-circle" size={100} color="#00E676" />
+                </View>
+              ) : undefined
+            }
           />
 
           <View style={styles.navigation}>
@@ -112,10 +124,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(30, 23, 48, 0.9)", // base do "liquid glass"
   },
   card: {
-    width: "85%",
+    width: "70%",
+    maxWidth: 800,
     backgroundColor: "rgba(30, 23, 48, 0.9)",
     borderRadius: 20,
-    padding: 30,
+    padding: 40,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
@@ -127,34 +140,34 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 15,
+    fontSize: 26,
+    fontWeight: "700",
+    marginBottom: 25,
   },
   navigation: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "60%",
-    marginTop: 30,
+    marginTop: 40,
   },
   glassButton: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     overflow: "hidden",
   },
   blurBackground: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 27.5,
+    borderRadius: 30,
     backgroundColor: "rgba(30, 23, 48, 0.6)", // igual ao overlay
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.08)",
   },
   arrow: {
     color: "#fff",
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
   },
   disabled: {
@@ -163,5 +176,17 @@ const styles = StyleSheet.create({
   finished: {
     borderColor: "rgba(0,255,0,0.4)",
     backgroundColor: "rgba(0,255,0,0.15)",
+  },
+  iconCircle: {
+    backgroundColor: "rgba(0, 230, 118, 0.1)",
+    borderRadius: 100,
+    padding: 20,
+    borderWidth: 3,
+    borderColor: "#00E676",
+    shadowColor: "#00E676",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
   },
 });

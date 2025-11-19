@@ -1,10 +1,18 @@
 import { View, Text, Image, StyleSheet } from "react-native";
+import { ReactNode } from "react";
 
-export default function CardTutorial({ text, image }) {
+interface CardTutorialProps {
+  text: string;
+  image?: any;
+  icon?: ReactNode;
+}
+
+export default function CardTutorial({ text, image, icon }: CardTutorialProps) {
   return (
     <View style={styles.content}>
       <Text style={styles.text}>{text}</Text>
-      <Image source={image} style={styles.image} resizeMode="contain" />
+      {image && <Image source={image} style={styles.image} resizeMode="contain" />}
+      {icon && <View style={styles.iconContainer}>{icon}</View>}
     </View>
   );
 }
@@ -13,16 +21,22 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 20,
+    gap: 30,
+    paddingVertical: 20,
   },
   text: {
     color: "#fff",
     textAlign: "center",
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 20,
+    lineHeight: 30,
+    fontWeight: "500",
+    paddingHorizontal: 10,
   },
   image: {
-    width: 90,
-    height: 90,
+    width: 250,
+    height: 250,
+  },
+  iconContainer: {
+    marginTop: 10,
   },
 });
