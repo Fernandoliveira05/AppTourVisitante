@@ -1,8 +1,8 @@
-import { ScrollView, StyleSheet } from "react-native";
+// components/ChatArea.tsx
+import { ScrollView, StyleSheet, ImageSourcePropType } from "react-native";
 import ChatBubble from "./MessageBubble";
 import userAvatar from "../assets/images/user.png";
 import botAvatar from "../assets/images/bot.png";
-import type { ImageSourcePropType } from "react-native";
 
 export type ChatMessage = {
   id: string | number;
@@ -25,8 +25,7 @@ export default function ChatArea({ messages }: ChatAreaProps) {
     >
       {messages.map((msg) => {
         const avatar =
-          msg.avatar ??
-          (msg.side === "right" ? userAvatar : botAvatar);
+          msg.avatar ?? (msg.side === "right" ? userAvatar : botAvatar);
 
         return (
           <ChatBubble
@@ -48,6 +47,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingVertical: 10,
-    paddingBottom: 32, // folga pro final não sumir atrás da navbar
+    paddingBottom: 32,
   },
 });

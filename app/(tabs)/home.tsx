@@ -1,57 +1,56 @@
-import React from "react";
+// app/(tabs)/home.tsx
+import React, { useState } from "react";
 import { Image, View, StyleSheet } from "react-native";
 import Logo from "../../assets/images/logo-branca.png";
-import { usePathname } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import ChatArea, { ChatMessage } from "../../components/chatArea";
 import VoiceButton from "../../components/VoiceButton";
 import Navbar from "@/components/navbar";
 
-// Por enquanto, só um mock. Depois você troca por dados reais (API, etc.).
-const MOCK_MESSAGES: ChatMessage[] = [
-  {
-    id: "1",
-    text: "Como funcionam as notas por aqui?",
-    time: "13:47",
-    side: "right",
-  },
-  {
-    id: "2",
-    text: "Olha, funciona assim: o sistema de avaliação dos alunos... ele é composto por três elementos...",
-    time: "13:47",
-    side: "left",
-  },
-];
-
 export default function Home() {
-  const pathname = usePathname();
-  
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: "1",
+      text: "Oi! Eu sou seu assistente do Inteli. Como posso te ajudar hoje?",
+      time: "13:47",
+      side: "left",
+    },
+  ]);
+
+  const handleSendText = (text: string) => {
+    const now = new Date();
+    const time = now.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text,
+      time,
+      side: "right",
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+  };
+
   return (
-    <>
-    <StatusBar hidden />
     <View style={styles.container}>
-      {/* Cabeçalho com logo */}
       <View style={styles.header}>
         <Image source={Logo} style={styles.logo} resizeMode="contain" />
       </View>
 
-      {/* Corpo dividido em dois: esquerda chat, direita mic grande */}
       <View style={styles.body}>
         <View style={styles.leftPane}>
-          <ChatArea messages={MOCK_MESSAGES} />
+          <ChatArea messages={messages} />
         </View>
 
         <View style={styles.rightPane}>
-          <View style={styles.micWrapper}>
-            <VoiceButton />
-          </View>
+          <VoiceButton onSendText={handleSendText} />
         </View>
       </View>
 
-      {/* Navbar embaixo */}
       <Navbar />
     </View>
-    </>
   );
 }
 
@@ -76,15 +75,12 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   leftPane: {
-    flex: 1,
+    flex: 1.5,
     marginRight: 12,
   },
   rightPane: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  micWrapper: {
-    transform: [{ scale: 1.6 }],
   },
 });
