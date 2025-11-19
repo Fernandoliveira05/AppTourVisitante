@@ -65,10 +65,10 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: 18,
   },
   time: {
-    fontSize: 11,
+    fontSize: 14,
     color: "rgba(255,255,255,0.6)",
     alignSelf: "flex-end",
     marginTop: 4,
