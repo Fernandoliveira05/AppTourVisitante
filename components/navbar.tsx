@@ -45,7 +45,10 @@ export default function Navbar() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => router.push("/(tabs)/faq")}
+        >
           <FontAwesome5 name="question-circle" size={26} color="#fff" />
         </TouchableOpacity>
 
