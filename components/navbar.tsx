@@ -9,8 +9,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   
-  console.log("Current pathname:", pathname);
-  
   const isHome = pathname === "/home";
 
   // define o ícone central uma vez, fora do JSX
@@ -52,7 +50,10 @@ export default function Navbar() {
           <FontAwesome5 name="question-circle" size={26} color="#fff" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => router.push("/(tabs)/menu")}
+        >
           <Entypo name="menu" size={30} color="#fff" />
         </TouchableOpacity>
       </BlurView>
