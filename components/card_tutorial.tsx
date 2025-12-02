@@ -1,5 +1,5 @@
-import { View, Text, Image, StyleSheet } from "react-native";
 import { ReactNode } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 interface CardTutorialProps {
   text: string;

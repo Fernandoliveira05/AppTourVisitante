@@ -1,8 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import Logo from "../../assets/images/logo-branca.png";
 import CardTutorial from "../../components/card_tutorial";
 
