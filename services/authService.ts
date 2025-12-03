@@ -1,5 +1,3 @@
-import { apiClient } from '@/api/client';
-import { AUTH_ENDPOINTS } from '@/api/endpoints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**

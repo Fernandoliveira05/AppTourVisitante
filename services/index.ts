@@ -5,9 +5,9 @@
  */
 
 export * from './authService';
-export * from './tourService';
 export * from './chatService';
 export * from './emergencyService';
+export * from './tourService';
 
 /**
  * COMO USAR:

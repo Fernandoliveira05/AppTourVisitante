@@ -1,5 +1,3 @@
-import { apiClient } from '@/api/client';
-import { CHAT_ENDPOINTS } from '@/api/endpoints';
 
 /**
  * SERVIÇO DE CHAT/ASSISTENTE

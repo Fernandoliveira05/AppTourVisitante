@@ -1,5 +1,3 @@
-import { apiClient } from '@/api/client';
-import { EMERGENCY_ENDPOINTS } from '@/api/endpoints';
 
 /**
  * SERVIÇO DE EMERGÊNCIA

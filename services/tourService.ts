@@ -1,5 +1,5 @@
-import { apiClient } from '@/api/client';
-import { TOUR_ENDPOINTS } from '@/api/endpoints';
+import { apiClient } from '../api/client';
+import { TOUR_ENDPOINTS, VISITANTE_ENDPOINTS } from '../api/endpoints';
 
 /**
  * SERVIÇO DE TOUR
@@ -8,13 +8,59 @@ import { TOUR_ENDPOINTS } from '@/api/endpoints';
  * Gerencia checkpoints, progresso do tour, etc.
  */
 
-// Tipos/Interfaces
+// Tipos/Interfaces da API Real
+export interface TourDTO {
+  id?: number;
+  codigo: string;
+  data_local: string;
+  fim_real: string | null;
+  hora_fim_prevista: string | null;
+  hora_inicio_prevista: string | null;
+  inicio_real: string | null;
+  responsavel_id: number | null;
+  robo_id: number;
+  status: 'scheduled' | 'inprogress' | 'completed' | 'cancelled';
+  titulo: string | null;
+}
+
+export interface VisitanteDTO {
+  id?: number;
+  email: string | null;
+  nome: string | null;
+  telefone: string | null;
+}
+
+export interface TourVisitanteDTO {
+  id?: number;
+  tour_id: number;
+  visitante_id: number;
+}
+
+export interface TourStatusLogDTO {
+  id?: number;
+  tour_id: number;
+  status: string;
+  atualizado_em: string | null;
+  observacoes: string | null;
+}
+
+export interface TourLoginResponse {
+  tour: TourDTO;
+  visitantes: VisitanteDTO[];
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+}
+
+// Tipos/Interfaces originais (mantidos para compatibilidade)
 export interface Checkpoint {
   id: number;
   name: string;
   description: string;
-  x: number; // Coordenada X no mapa (%)
-  y: number; // Coordenada Y no mapa (%)
+  x: number;
+  y: number;
   state: 'unvisited' | 'visited' | 'visiting';
   order: number;
   locationId: string;
@@ -45,24 +91,245 @@ export interface CompleteCheckpointData {
  */
 class TourService {
   /**
+   * Autentica um usuário pelo código do Tour
+   * 1. Busca todos os tours
+   * 2. Encontra o tour com o código correspondente
+   * 3. Busca os visitantes vinculados ao tour
+   * 4. Retorna os dados do tour e visitantes
+   * 
+   * @param code - Código do tour
+   * @returns Dados do tour e visitantes
+   */
+  async loginByCode(code: string): Promise<TourLoginResponse> {
+    try {
+      console.log('🔍 Buscando tour com código:', code);
+      
+      // 1. Buscar todos os tours
+      const toursResponse = await apiClient.get<ApiResponse<TourDTO[]>>(
+        TOUR_ENDPOINTS.GET_ALL
+      );
+      
+      console.log('📋 Tours encontrados:', toursResponse.data.data.length);
+      
+      // 2. Encontrar o tour com o código correspondente (case insensitive)
+      const tour = toursResponse.data.data.find(
+        t => t.codigo?.toUpperCase() === code.toUpperCase()
+      );
+      
+      if (!tour) {
+        throw new Error('Tour não encontrado com o código fornecido');
+      }
+      
+      if (!tour.id) {
+        throw new Error('Tour encontrado mas sem ID válido');
+      }
+      
+      console.log('✅ Tour encontrado:', tour);
+      
+      // 3. Buscar os visitantes vinculados ao tour
+      let visitantes: VisitanteDTO[] = [];
+      
+      try {
+        const visitantesLinkResponse = await apiClient.get<ApiResponse<TourVisitanteDTO[]>>(
+          TOUR_ENDPOINTS.GET_VISITORS_BY_TOUR(tour.id)
+        );
+        
+        console.log('🔗 Links encontrados:', visitantesLinkResponse.data.data.length);
+        
+        // 4. Buscar os dados completos de cada visitante
+        const visitantesPromises = visitantesLinkResponse.data.data.map(link =>
+          apiClient.get<ApiResponse<VisitanteDTO>>(
+            VISITANTE_ENDPOINTS.GET_BY_ID(link.visitante_id)
+          )
+        );
+        
+        const visitantesResponses = await Promise.all(visitantesPromises);
+        visitantes = visitantesResponses.map(response => response.data.data);
+        
+        console.log('👥 Visitantes encontrados:', visitantes.length);
+      } catch (error) {
+        console.warn('⚠️ Erro ao buscar visitantes, continuando sem eles:', error);
+        // Continua mesmo sem visitantes
+      }
+      
+      return {
+        tour,
+        visitantes
+      };
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao fazer login com código:', error);
+      
+      if (error.message === 'Tour não encontrado com o código fornecido') {
+        throw error;
+      }
+      
+      if (error.response) {
+        throw new Error(`Erro na API: ${error.response.status} - ${error.response.data?.message || 'Erro desconhecido'}`);
+      }
+      
+      if (error.request) {
+        throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+      }
+      
+      throw new Error('Erro ao processar requisição. Tente novamente.');
+    }
+  }
+
+  /**
+   * Busca um tour específico por ID
+   * 
+   * @param id - ID do tour
+   * @returns Dados do tour
+   */
+  async getTourById(id: number): Promise<TourDTO> {
+    try {
+      const response = await apiClient.get<ApiResponse<TourDTO>>(
+        TOUR_ENDPOINTS.GET_BY_ID(id)
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Erro ao buscar tour por ID:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Busca todos os tours
+   * 
+   * @returns Lista de tours
+   */
+  async getAllTours(): Promise<TourDTO[]> {
+    try {
+      const response = await apiClient.get<ApiResponse<TourDTO[]>>(
+        TOUR_ENDPOINTS.GET_ALL
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Erro ao buscar todos os tours:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cria um novo tour
+   * 
+   * @param tourData - Dados do tour
+   * @returns Tour criado
+   */
+  async createTour(tourData: Omit<TourDTO, 'id'>): Promise<TourDTO> {
+    try {
+      const response = await apiClient.post<ApiResponse<TourDTO>>(
+        TOUR_ENDPOINTS.CREATE,
+        tourData
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Erro ao criar tour:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Atualiza um tour existente
+   * 
+   * @param id - ID do tour
+   * @param tourData - Dados atualizados
+   * @returns Tour atualizado
+   */
+  async updateTour(id: number, tourData: Omit<TourDTO, 'id'>): Promise<TourDTO> {
+    try {
+      const response = await apiClient.put<ApiResponse<TourDTO>>(
+        TOUR_ENDPOINTS.UPDATE(id),
+        tourData
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Erro ao atualizar tour:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deleta um tour
+   * 
+   * @param id - ID do tour
+   */
+  async deleteTour(id: number): Promise<void> {
+    try {
+      await apiClient.delete(TOUR_ENDPOINTS.DELETE(id));
+    } catch (error) {
+      console.error('❌ Erro ao deletar tour:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Busca os logs de status de um tour
+   * 
+   * @param tourId - ID do tour
+   * @returns Lista de logs de status
+   */
+  async getTourStatusLogs(tourId: number): Promise<TourStatusLogDTO[]> {
+    try {
+      const response = await apiClient.get<ApiResponse<TourStatusLogDTO[]>>(
+        TOUR_ENDPOINTS.GET_STATUS_LOGS_BY_TOUR(tourId)
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Erro ao buscar logs de status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cria um novo log de status para um tour
+   * 
+   * @param logData - Dados do log
+   * @returns Log criado
+   */
+  async createStatusLog(logData: Omit<TourStatusLogDTO, 'id'>): Promise<TourStatusLogDTO> {
+    try {
+      const response = await apiClient.post<ApiResponse<TourStatusLogDTO>>(
+        TOUR_ENDPOINTS.CREATE_STATUS_LOG,
+        logData
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Erro ao criar log de status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Vincula um visitante a um tour
+   * 
+   * @param tourId - ID do tour
+   * @param visitanteId - ID do visitante
+   * @returns Link criado
+   */
+  async linkVisitorToTour(tourId: number, visitanteId: number): Promise<TourVisitanteDTO> {
+    try {
+      const response = await apiClient.post<ApiResponse<TourVisitanteDTO>>(
+        TOUR_ENDPOINTS.LINK_VISITOR,
+        { tour_id: tourId, visitante_id: visitanteId }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Erro ao vincular visitante ao tour:', error);
+      throw error;
+    }
+  }
+
+  // ========== MÉTODOS ORIGINAIS (MOCK) ==========
+  // Mantidos para compatibilidade com o código existente
+
+  /**
    * Inicia um novo tour
    * 
    * @returns Dados do tour iniciado
-   * 
-   * Exemplo de uso:
-   * ```typescript
-   * const tour = await tourService.startTour();
-   * console.log('Tour iniciado:', tour);
-   * ```
    */
   async startTour(): Promise<StartTourResponse> {
-    // TODO: Descomente quando a API estiver pronta
-    // const response = await apiClient.post<StartTourResponse>(
-    //   TOUR_ENDPOINTS.START
-    // );
-    // return response.data;
-
-    // Mock de resposta para desenvolvimento
     console.log('🚀 Mock Start Tour');
     return {
       tour: {
@@ -81,21 +348,8 @@ class TourService {
    * Busca todos os checkpoints do tour
    * 
    * @returns Lista de checkpoints
-   * 
-   * Exemplo de uso:
-   * ```typescript
-   * const checkpoints = await tourService.getCheckpoints();
-   * setCheckpoints(checkpoints);
-   * ```
    */
   async getCheckpoints(): Promise<Checkpoint[]> {
-    // TODO: Descomente quando a API estiver pronta
-    // const response = await apiClient.get<Checkpoint[]>(
-    //   TOUR_ENDPOINTS.CHECKPOINTS
-    // );
-    // return response.data;
-
-    // Mock de resposta para desenvolvimento
     console.log('📍 Mock Get Checkpoints');
     return [
       { id: 1, name: 'Recepção', description: 'Entrada principal', x: 77, y: 50, state: 'visited', order: 1, locationId: 'loc_1' },
@@ -111,21 +365,8 @@ class TourService {
    * 
    * @param id - ID do checkpoint
    * @returns Dados do checkpoint
-   * 
-   * Exemplo de uso:
-   * ```typescript
-   * const checkpoint = await tourService.getCheckpointById(1);
-   * console.log('Checkpoint:', checkpoint);
-   * ```
    */
   async getCheckpointById(id: number): Promise<Checkpoint> {
-    // TODO: Descomente quando a API estiver pronta
-    // const response = await apiClient.get<Checkpoint>(
-    //   TOUR_ENDPOINTS.CHECKPOINT_BY_ID(id)
-    // );
-    // return response.data;
-
-    // Mock de resposta para desenvolvimento
     console.log('📍 Mock Get Checkpoint By ID:', id);
     return {
       id,
@@ -145,27 +386,11 @@ class TourService {
    * @param checkpointId - ID do checkpoint
    * @param data - Dados de conclusão (opcional)
    * @returns Checkpoint atualizado
-   * 
-   * Exemplo de uso:
-   * ```typescript
-   * await tourService.completeCheckpoint(3, {
-   *   completedAt: new Date().toISOString(),
-   *   notes: 'Tour concluído sem problemas'
-   * });
-   * ```
    */
   async completeCheckpoint(
     checkpointId: number,
     data?: CompleteCheckpointData
   ): Promise<Checkpoint> {
-    // TODO: Descomente quando a API estiver pronta
-    // const response = await apiClient.post<Checkpoint>(
-    //   TOUR_ENDPOINTS.COMPLETE_CHECKPOINT(checkpointId),
-    //   data || { completedAt: new Date().toISOString() }
-    // );
-    // return response.data;
-
-    // Mock de resposta para desenvolvimento
     console.log('✅ Mock Complete Checkpoint:', checkpointId, data);
     return {
       id: checkpointId,
@@ -183,51 +408,18 @@ class TourService {
    * Busca o tour atual em andamento
    * 
    * @returns Tour em andamento ou null
-   * 
-   * Exemplo de uso:
-   * ```typescript
-   * const currentTour = await tourService.getCurrentTour();
-   * if (currentTour) {
-   *   console.log('Tour em andamento:', currentTour);
-   * }
-   * ```
    */
   async getCurrentTour(): Promise<Tour | null> {
-    // TODO: Descomente quando a API estiver pronta
-    // try {
-    //   const response = await apiClient.get<Tour>(
-    //     TOUR_ENDPOINTS.CURRENT_TOUR
-    //   );
-    //   return response.data;
-    // } catch (error) {
-    //   // Se não houver tour em andamento, retorna null
-    //   return null;
-    // }
-
-    // Mock de resposta para desenvolvimento
     console.log('🔍 Mock Get Current Tour');
-    return null; // Simula que não há tour em andamento
+    return null;
   }
 
   /**
    * Busca o histórico de tours do usuário
    * 
    * @returns Lista de tours realizados
-   * 
-   * Exemplo de uso:
-   * ```typescript
-   * const history = await tourService.getTourHistory();
-   * console.log('Tours realizados:', history.length);
-   * ```
    */
   async getTourHistory(): Promise<Tour[]> {
-    // TODO: Descomente quando a API estiver pronta
-    // const response = await apiClient.get<Tour[]>(
-    //   TOUR_ENDPOINTS.HISTORY
-    // );
-    // return response.data;
-
-    // Mock de resposta para desenvolvimento
     console.log('📜 Mock Get Tour History');
     return [];
   }
@@ -236,16 +428,8 @@ class TourService {
    * Cancela o tour atual
    * 
    * @param tourId - ID do tour a ser cancelado
-   * 
-   * Exemplo de uso:
-   * ```typescript
-   * await tourService.cancelTour('tour_123');
-   * ```
    */
   async cancelTour(tourId: string): Promise<void> {
-    // TODO: Descomente quando a API estiver pronta
-    // await apiClient.delete(`/tour/${tourId}`);
-
     console.log('❌ Mock Cancel Tour:', tourId);
   }
 }
@@ -258,6 +442,17 @@ export const tourService = new TourService();
  * 
  * import { tourService } from '@/services/tourService';
  * 
+ * // Login com código:
+ * const handleLogin = async (code: string) => {
+ *   try {
+ *     const data = await tourService.loginByCode(code);
+ *     console.log('Tour:', data.tour);
+ *     console.log('Visitantes:', data.visitantes);
+ *   } catch (error) {
+ *     console.error('Erro:', error);
+ *   }
+ * };
+ * 
  * // No componente de mapa:
  * useEffect(() => {
  *   const loadCheckpoints = async () => {
@@ -266,10 +461,4 @@ export const tourService = new TourService();
  *   };
  *   loadCheckpoints();
  * }, []);
- * 
- * // Ao completar um checkpoint:
- * const handleCompleteCheckpoint = async (id: number) => {
- *   await tourService.completeCheckpoint(id);
- *   // Atualizar estado local
- * };
  */

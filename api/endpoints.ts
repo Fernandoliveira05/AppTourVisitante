@@ -22,20 +22,52 @@ export const AUTH_ENDPOINTS = {
 
 /**
  * Endpoints de Tour
- * TODO: Ajuste os endpoints conforme sua API real
  */
 export const TOUR_ENDPOINTS = {
+  // Endpoints originais
   START: '/tour/start',
   CHECKPOINTS: '/tour/checkpoints',
   CHECKPOINT_BY_ID: (id: number) => `/tour/checkpoints/${id}`,
   COMPLETE_CHECKPOINT: (id: number) => `/tour/checkpoints/${id}/complete`,
   CURRENT_TOUR: '/tour/current',
   HISTORY: '/tour/history',
+  
+  // Novos endpoints da API real
+  GET_ALL: '/v1/tour',
+  GET_BY_ID: (id: number) => `/v1/tour/${id}`,
+  CREATE: '/v1/tour',
+  UPDATE: (id: number) => `/v1/tour/${id}`,
+  DELETE: (id: number) => `/v1/tour/${id}`,
+  
+  // Endpoints de Tour-Visitante
+  GET_VISITORS_BY_TOUR: (tourId: number) => `/v1/tour-visitante/tour/${tourId}`,
+  GET_TOURS_BY_VISITOR: (visitorId: number) => `/v1/tour-visitante/visitante/${visitorId}`,
+  LINK_VISITOR: '/v1/tour-visitante',
+  GET_LINK_BY_ID: (id: number) => `/v1/tour-visitante/${id}`,
+  DELETE_LINK: (id: number) => `/v1/tour-visitante/${id}`,
+  
+  // Endpoints de Status Log
+  GET_STATUS_LOGS: '/v1/tour-status-log',
+  CREATE_STATUS_LOG: '/v1/tour-status-log',
+  GET_STATUS_LOG_BY_ID: (id: number) => `/v1/tour-status-log/${id}`,
+  GET_STATUS_LOGS_BY_TOUR: (tourId: number) => `/v1/tour-status-log/tour/${tourId}`,
+  UPDATE_STATUS_LOG: (id: number) => `/v1/tour-status-log/${id}`,
+  DELETE_STATUS_LOG: (id: number) => `/v1/tour-status-log/${id}`,
+};
+
+/**
+ * Endpoints de Visitante
+ */
+export const VISITANTE_ENDPOINTS = {
+  GET_ALL: '/v1/visitante',
+  GET_BY_ID: (id: number) => `/v1/visitante/${id}`,
+  CREATE: '/v1/visitante',
+  UPDATE: (id: number) => `/v1/visitante/${id}`,
+  DELETE: (id: number) => `/v1/visitante/${id}`,
 };
 
 /**
  * Endpoints de Chat/Assistente
- * TODO: Ajuste os endpoints conforme sua API real
  */
 export const CHAT_ENDPOINTS = {
   SEND_MESSAGE: '/chat/message',
@@ -47,7 +79,6 @@ export const CHAT_ENDPOINTS = {
 
 /**
  * Endpoints de Emergência
- * TODO: Ajuste os endpoints conforme sua API real
  */
 export const EMERGENCY_ENDPOINTS = {
   TRIGGER: '/emergency/trigger',
@@ -58,7 +89,6 @@ export const EMERGENCY_ENDPOINTS = {
 
 /**
  * Endpoints de Mapa
- * TODO: Ajuste os endpoints conforme sua API real
  */
 export const MAP_ENDPOINTS = {
   GET_MAP: '/map',
@@ -69,7 +99,6 @@ export const MAP_ENDPOINTS = {
 
 /**
  * Endpoints de Usuário
- * TODO: Ajuste os endpoints conforme sua API real
  */
 export const USER_ENDPOINTS = {
   PROFILE: '/user/profile',

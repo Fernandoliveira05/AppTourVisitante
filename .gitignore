@@ -46,5 +46,6 @@ app-example
 # Coisas do Computador
 /.vscode
 
+.env
 
 
