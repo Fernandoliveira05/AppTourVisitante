@@ -1,13 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Logo from "../../assets/images/logo-branca.png";
 import CardTutorial from "../../components/card_tutorial";
 
-export default function Home() {
+export default function Onboarding() {
   const router = useRouter();
+
+  // 🔹 pega tudo que veio do login
+  const {
+    tourId,
+    tourCode,
+    tourTitle,
+    visitorName,
+    visitorCount,
+  } = useLocalSearchParams<{
+    tourId?: string;
+    tourCode?: string;
+    tourTitle?: string;
+    visitorName?: string;
+    visitorCount?: string;
+  }>();
 
   const steps = [
     {
@@ -32,14 +47,24 @@ export default function Home() {
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((prev) => prev + 1);
     } else {
-      router.push("/(tabs)/home");
+      // 🔥 repassa o tourId (e o resto) pra Home
+      router.replace({
+        pathname: "/(tabs)/home",
+        params: {
+          tourId: tourId ?? "",
+          tourCode: tourCode ?? "",
+          tourTitle: tourTitle ?? "",
+          visitorName: visitorName ?? "",
+          visitorCount: visitorCount ?? "0",
+        },
+      });
     }
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
+    if (currentStep > 0) setCurrentStep((prev) => prev - 1);
   };
 
   return (
@@ -103,6 +128,7 @@ export default function Home() {
   );
 }
 
+// estilos iguais aos seus
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -121,7 +147,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(30, 23, 48, 0.9)", // base do "liquid glass"
+    backgroundColor: "rgba(30, 23, 48, 0.9)",
   },
   card: {
     width: "70%",
@@ -161,7 +187,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 30,
-    backgroundColor: "rgba(30, 23, 48, 0.6)", // igual ao overlay
+    backgroundColor: "rgba(30, 23, 48, 0.6)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.08)",
   },

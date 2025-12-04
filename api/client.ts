@@ -8,8 +8,10 @@ import { setupInterceptors } from './interceptors';
  * Aqui você define a URL base da API e configurações globais.
  */
 
-// URL base da API conforme documentação
+// TODO: Substitua pela URL da sua API real
+// Exemplo: 'https://api.inteli.edu.br/v1' ou 'http://localhost:3000/api'
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.140.0.11:8080';
+console.log("API_BASE_URL USADA:", API_BASE_URL);
 
 // Timeout padrão para requisições (em milissegundos)
 const DEFAULT_TIMEOUT = 30000; // 30 segundos
@@ -40,7 +42,7 @@ export const apiClient = createApiClient();
  * COMO USAR:
  * 
  * 1. Configure a variável de ambiente EXPO_PUBLIC_API_URL no arquivo .env:
- *    EXPO_PUBLIC_API_URL=http://10.140.0.11:8080
+ *    EXPO_PUBLIC_API_URL=https://sua-api.com/v1
  * 
  * 2. Importe o apiClient nos seus services:
  *    import { apiClient } from '@/api/client';
