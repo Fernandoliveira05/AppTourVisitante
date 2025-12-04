@@ -1,15 +1,19 @@
 import Navbar from "@/components/navbar";
+import { useTour } from "@/context/TourContext";
+import { alertService } from "@/services/alertService";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Animated, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const Logo = require("../../assets/images/logo-branca.png");
 const AlertButton = require("../../assets/images/alert-button.png");
 
 export default function Emergencia() {
   const [scaleAnim] = useState(new Animated.Value(1));
+  const [isLoading, setIsLoading] = useState(false);
+  const { tour } = useTour();
 
-  const handleAlertPress = () => {
+  const handleAlertPress = async () => {
     // Animação de pressão
     Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -24,8 +28,59 @@ export default function Emergencia() {
       }),
     ]).start();
 
-    // Log da emergência acionada
-    console.log("🚨 EMERGÊNCIA ACIONADA - Tour interrompido, equipe Inteli notificada");
+    // Confirmar acionamento da emergência
+    Alert.alert(
+      "🚨 Confirmar Emergência",
+      "Você tem certeza que deseja acionar a emergência? A equipe Inteli será notificada imediatamente.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Sim, acionar",
+          style: "destructive",
+          onPress: async () => {
+            setIsLoading(true);
+            
+            try {
+              console.log("🚨 Acionando emergência...");
+              console.log("Tour ID:", tour?.tourId);
+
+              // Chama a API para criar o alerta
+              const alert = await alertService.triggerEmergency(
+                tour?.tourId ?? null,
+                "Emergência acionada pelo visitante através do aplicativo"
+              );
+
+              console.log("✅ Emergência acionada com sucesso:", alert);
+
+              // Notifica o usuário
+              Alert.alert(
+                "✅ Emergência Acionada",
+                "A equipe Inteli foi notificada e prestará auxílio em breve. Aguarde no local.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => console.log("Emergência confirmada pelo usuário"),
+                  },
+                ]
+              );
+            } catch (error: any) {
+              console.error("❌ Erro ao acionar emergência:", error);
+
+              Alert.alert(
+                "❌ Erro",
+                "Não foi possível acionar a emergência. Por favor, procure um funcionário do Inteli imediatamente.",
+                [{ text: "OK" }]
+              );
+            } finally {
+              setIsLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -43,23 +98,34 @@ export default function Emergencia() {
           <TouchableOpacity 
             activeOpacity={0.8}
             onPress={handleAlertPress}
+            disabled={isLoading}
           >
             <Animated.View 
               style={[
                 styles.buttonCircle,
-                { transform: [{ scale: scaleAnim }] }
+                { transform: [{ scale: scaleAnim }] },
+                isLoading && styles.buttonDisabled
               ]}
             >
-              <Image source={AlertButton} style={styles.alertButton} resizeMode="contain" />
+              {isLoading ? (
+                <ActivityIndicator size="large" color="#fff" />
+              ) : (
+                <Image source={AlertButton} style={styles.alertButton} resizeMode="contain" />
+              )}
             </Animated.View>
           </TouchableOpacity>
 
           {/* Título */}
-          <Text style={styles.title}>DESEJA SOLICITAR A EMERGÊNCIA?</Text>
+          <Text style={styles.title}>
+            {isLoading ? "ACIONANDO EMERGÊNCIA..." : "DESEJA SOLICITAR A EMERGÊNCIA?"}
+          </Text>
 
           {/* Texto explicativo */}
           <Text style={styles.description}>
-            Ao clicar neste ícone, o tour será interrompido e a equipe Inteli será acionada
+            {isLoading 
+              ? "Aguarde, estamos notificando a equipe Inteli..."
+              : "Ao clicar neste ícone, o tour será interrompido e a equipe Inteli será acionada"
+            }
           </Text>
         </View>
 
@@ -109,6 +175,9 @@ const styles = StyleSheet.create({
   alertButton: {
     width: 180,
     height: 180,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   title: {
     fontSize: 24,

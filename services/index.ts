@@ -4,6 +4,7 @@
  * Este arquivo facilita as importações centralizando todos os services.
  */
 
+export * from './alertService';
 export * from './authService';
 export * from './chatService';
 export * from './emergencyService';

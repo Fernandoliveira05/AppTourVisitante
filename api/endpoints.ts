@@ -78,6 +78,17 @@ export const CHAT_ENDPOINTS = {
 };
 
 /**
+ * ENDPOINTS - ALERTAS/EMERGÊNCIA
+ */
+export const ALERT_ENDPOINTS = {
+  GET_ALL: '/v1/alertas',
+  GET_BY_ID: (id: number) => `/v1/alertas/${id}`,
+  CREATE: '/v1/alertas',
+  UPDATE: (id: number) => `/v1/alertas/${id}`,
+  DELETE: (id: number) => `/v1/alertas/${id}`,
+};
+
+/**
  * Endpoints de Emergência
  */
 export const EMERGENCY_ENDPOINTS = {
