@@ -1,9 +1,19 @@
+// app/index.tsx (ou app/login.tsx)
 import { Manrope_700Bold } from "@expo-google-fonts/manrope/700Bold";
 import { useFonts } from "@expo-google-fonts/manrope/useFonts";
 import { Image } from "expo-image";
-import { router, usePathname } from "expo-router";
+import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+// Imagens
 import Auditorio from "../../assets/images/Login/Auditório.jpg";
 import Casinhas from "../../assets/images/Login/Casinhas.jpg";
 import Frente from "../../assets/images/Login/Frente.jpg";
@@ -11,9 +21,15 @@ import Letreiro from "../../assets/images/Login/Letreiro.jpeg";
 import Pessoas from "../../assets/images/Login/Pessoas.jpeg";
 import Refeitorio from "../../assets/images/Login/Refeitorio.jpg";
 import Logo from "../../assets/images/logo-branca.png";
-import AccessCodeInput from "../../components/code";
 
-function randomPhoto(max) {
+import { useTour } from "@/context/TourContext";
+
+// Componentes e serviços
+import AccessCodeInput from "../../components/code";
+import { tourService } from "../../services/tourService";
+import { checkpointService } from "../../services/checkpointService";
+
+function randomPhoto(max: number) {
   return Math.floor(Math.random() * max);
 }
 
@@ -22,18 +38,87 @@ const numberRandom = randomPhoto(photos.length);
 const photo = photos[numberRandom];
 
 export default function HomeScreen() {
-  const pathname = usePathname();
   const [code, setCode] = useState("");
-  
-  let [fontsLoaded] = useFonts({
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { setTour } = useTour();
+
+  const [fontsLoaded] = useFonts({
     Manrope_700Bold,
   });
 
-  const handleLogin = () => {
-    if (code.toUpperCase() === "FER") {
-      router.push("/(tabs)/onboarding");
-    } else {
-      Alert.alert("❌ Código incorreto", "Por favor, verifique o código de acesso.");
+  const handleLogin = async () => {
+    if (!code || code.trim().length === 0) {
+      Alert.alert("❌ Código incorreto", "Por favor, digite o código de acesso.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log("🔐 Tentando login com código:", code);
+
+      // 1) Login do tour (isso já funcionava antes)
+      const data = await tourService.loginByCode(code);
+
+      console.log("✅ Login bem-sucedido!");
+      console.log("📋 Tour:", data.tour);
+      console.log("👥 Visitantes:", data.visitantes);
+
+      // 2) Buscar checkpoints do tour
+      let checkpointId: number | null = null;
+      try {
+        const checkpoints = await checkpointService.getByTourId(data.tour.id);
+        const currentCheckpoint = checkpointService.getCurrent(checkpoints);
+
+        console.log("📍 Checkpoints:", checkpoints);
+        console.log("✅ Checkpoint atual:", currentCheckpoint);
+
+        checkpointId = currentCheckpoint?.id ?? null;
+      } catch (err: any) {
+        console.log("⚠️ Erro ao buscar checkpoints. Seguindo sem checkpoint:", err?.message);
+        // Não derruba o login – só segue sem checkpoint
+        checkpointId = null;
+      }
+
+      // 3) Salvar no contexto
+      setTour({
+        tourId: data.tour.id,
+        roboId: data.tour.robo_id,
+        checkpointId, // pode ser null se não achou / deu 404
+      });
+
+      // 4) Nome do visitante
+      const visitorName =
+        data.visitantes.length > 0
+          ? data.visitantes[0].nome || "Visitante"
+          : "Visitante";
+
+      // 5) Navegar para onboarding
+      router.push({
+        pathname: "/(tabs)/onboarding",
+        params: {
+          tourId: data.tour.id?.toString() || "",
+          tourCode: data.tour.codigo,
+          tourTitle: data.tour.titulo || "Tour",
+          visitorName: visitorName,
+          visitorCount: data.visitantes.length.toString(),
+        },
+      });
+    } catch (error: any) {
+      console.error("❌ Erro no login:", error);
+
+      let errorMessage = "Por favor, verifique o código de acesso.";
+
+      if (error?.message?.includes("Tour não encontrado")) {
+        errorMessage = "Não encontramos um tour com este código.";
+      } else if (error?.message?.includes("Erro de conexão")) {
+        errorMessage = "Verifique sua conexão com a internet.";
+      }
+
+      Alert.alert("❌ Código incorreto", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -54,9 +139,19 @@ export default function HomeScreen() {
             contentFit="contain"
             transition={1000}
           />
+
           <AccessCodeInput value={code} onChangeText={setCode} />
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Entrar</Text>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.buttonText}>Entrar</Text>
+            )}
           </TouchableOpacity>
         </TouchableOpacity>
       </View>
@@ -65,13 +160,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   text: {
-    fontFamily : "Manrope_700Bold",
-    color: "#fff" 
-  }, 
+    fontFamily: "Manrope_700Bold",
+    color: "#fff",
+  },
   overlay: {
     flex: 1,
     justifyContent: "center",

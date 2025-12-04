@@ -10,7 +10,8 @@ import { setupInterceptors } from './interceptors';
 
 // TODO: Substitua pela URL da sua API real
 // Exemplo: 'https://api.inteli.edu.br/v1' ou 'http://localhost:3000/api'
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.example.com';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.140.0.11:8080';
+console.log("API_BASE_URL USADA:", API_BASE_URL);
 
 // Timeout padrão para requisições (em milissegundos)
 const DEFAULT_TIMEOUT = 30000; // 30 segundos

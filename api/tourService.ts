@@ -32,13 +32,11 @@ export interface VisitanteDTO {
 
 export interface TourVisitanteDTO {
   id?: number;
-  tour_id: number;
   visitante_id: number;
 }
 
 export interface TourStatusLogDTO {
   id?: number;
-  tour_id: number;
   status: string;
   atualizado_em: string | null;
   observacoes: string | null;
