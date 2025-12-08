@@ -11,9 +11,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio, type RecordingStatus, type Recording } from "expo-av";
+import * as FileSystem from "expo-file-system/legacy";
 
-const TRANSCRIBE_URL = "https://after-subscribe-all-gmc.trycloudflare.com/transcribe";
-
+const STT_WS_URL = "ws://10.140.0.11:5000/stt";
 
 const BARS_COUNT = 24;
 const MIN_HEIGHT = 6;
@@ -172,34 +172,54 @@ export default function VoiceButton({ onSendText }: VoiceButtonProps) {
   };
 
   const transcribeAudio = async (uri: string): Promise<string | null> => {
-    try {
-      const formData = new FormData();
-      formData.append("file", {
-        uri,
-        name: "audio.m4a",
-        type: "audio/m4a",
-      } as any);
+  try {
+    // 1) Ler o arquivo como base64 (sem usar EncodingType)
+    const base64Audio = await FileSystem.readAsStringAsync(uri, {
+      encoding: "base64" as any, // evita o acesso FileSystem.EncodingType.Base64
+    });
 
-      const response = await fetch(TRANSCRIBE_URL, {
-        method: "POST",
-        body: formData,
-        // dica: em React Native, normalmente NÃO setar 'Content-Type' manualmente,
-        // o próprio fetch cuida do boundary do multipart
-      });
+    console.log("📦 Áudio em base64, tamanho:", base64Audio.length);
 
-      if (!response.ok) {
-        console.error("Erro na API de transcrição:", await response.text());
-        return null;
+    // 2) Enviar via WebSocket e esperar resposta
+    const texto = await new Promise<string | null>((resolve, reject) => {
+      try {
+        console.log("🌐 Conectando ao WebSocket STT:", STT_WS_URL);
+        const ws = new WebSocket(STT_WS_URL);
+
+        ws.onopen = () => {
+          console.log("✅ WebSocket conectado, enviando áudio...");
+          ws.send(base64Audio);
+        };
+
+        ws.onmessage = (event) => {
+          console.log("📨 Resposta do servidor STT:", event.data);
+          const msg = String(event.data || "").trim();
+          ws.close();
+          resolve(msg || null);
+        };
+
+        ws.onerror = (event) => {
+          console.error("❌ Erro no WebSocket STT:", event);
+          ws.close();
+          reject(new Error("Erro no WebSocket STT"));
+        };
+
+        ws.onclose = (event) => {
+          console.log("🔒 WebSocket fechado:", event.code, event.reason);
+        };
+      } catch (err) {
+        console.error("Erro ao criar WebSocket:", err);
+        reject(err);
       }
+    });
 
-      const data = await response.json();
-      // assumindo que sua API responde { text: "..." }
-      return data.text ?? null;
-    } catch (e) {
-      console.error("Erro ao transcrever áudio:", e);
-      return null;
-    }
-  };
+    return texto;
+  } catch (e) {
+    console.error("Erro ao transcrever áudio:", e);
+    return null;
+  }
+};
+
 
   const stopRecording = async () => {
     const recording = recordingRef.current;
@@ -219,6 +239,8 @@ export default function VoiceButton({ onSendText }: VoiceButtonProps) {
 
         if (transcript && transcript.trim().length > 0) {
           onSendText(transcript.trim()); // 👉 aparece como mensagem do usuário
+        } else {
+          console.log("Nenhuma transcrição retornada.");
         }
       }
     } catch (e) {
@@ -232,7 +254,7 @@ export default function VoiceButton({ onSendText }: VoiceButtonProps) {
   };
 
   const toggleRecording = () => {
-    if (isTranscribing) return; // evita aperto enquanto transcreve
+    if (isTranscribing) return; // evita apertar enquanto transcreve
 
     if (isRecording) {
       stopRecording();
@@ -272,7 +294,6 @@ export default function VoiceButton({ onSendText }: VoiceButtonProps) {
     setText("");
   };
 
-  // animação suave entre mic e chat, sem mudar tamanho
   const micIconStyle = {
     opacity: modeAnim.interpolate({
       inputRange: [0, 1],
@@ -302,11 +323,6 @@ export default function VoiceButton({ onSendText }: VoiceButtonProps) {
       },
     ],
   };
-
-  const toggleRotation = modeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
-  });
 
   return (
     <View style={styles.container}>
@@ -395,7 +411,7 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     alignItems: "center",
-    transform: [{ scale: 1.6 }], 
+    transform: [{ scale: 1.6 }],
   },
   switchWrapper: {
     position: "relative",
@@ -456,7 +472,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     flexDirection: "row",
     width: 300,
-    height: 50,  
+    height: 50,
     alignItems: "center",
     paddingHorizontal: 14,
     paddingVertical: 10,

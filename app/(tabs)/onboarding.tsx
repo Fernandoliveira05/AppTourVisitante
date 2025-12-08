@@ -1,6 +1,7 @@
+// app/(tabs)/onboarding.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Logo from "../../assets/images/logo-branca.png";
@@ -8,21 +9,6 @@ import CardTutorial from "../../components/card_tutorial";
 
 export default function Onboarding() {
   const router = useRouter();
-
-  // 🔹 pega tudo que veio do login
-  const {
-    tourId,
-    tourCode,
-    tourTitle,
-    visitorName,
-    visitorCount,
-  } = useLocalSearchParams<{
-    tourId?: string;
-    tourCode?: string;
-    tourTitle?: string;
-    visitorName?: string;
-    visitorCount?: string;
-  }>();
 
   const steps = [
     {
@@ -49,17 +35,8 @@ export default function Onboarding() {
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      // 🔥 repassa o tourId (e o resto) pra Home
-      router.replace({
-        pathname: "/(tabs)/home",
-        params: {
-          tourId: tourId ?? "",
-          tourCode: tourCode ?? "",
-          tourTitle: tourTitle ?? "",
-          visitorName: visitorName ?? "",
-          visitorCount: visitorCount ?? "0",
-        },
-      });
+      // 👉 Depois do tutorial, vai para a tela de boas-vindas do chat
+      router.push("/(tabs)/chatIntro");
     }
   };
 
@@ -128,7 +105,6 @@ export default function Onboarding() {
   );
 }
 
-// estilos iguais aos seus
 const styles = StyleSheet.create({
   container: {
     flex: 1,
