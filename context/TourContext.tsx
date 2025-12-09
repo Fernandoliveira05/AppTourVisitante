@@ -1,35 +1,38 @@
 // context/TourContext.tsx
 import React, { createContext, useContext, useState } from "react";
 
-type TourInfo = {
-  tourId: number;
-  checkpointId?: number;
-} | null;
-
-type TourContextType = {
-  tour: TourInfo;
-  setTour: (info: TourInfo) => void;
-};
-
-const TourContext = createContext<TourContextType>({
-  tour: null,
-  setTour: () => {},
-});
-
 type TourState = {
   tourId: number | null;
   checkpointId: number | null;
-  roboId: number | null;
+  roboId?: number | null;       // 👈 adicionamos roboId aqui
+  visitorName?: string | null;
 };
 
-export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tour, setTour] = useState<TourInfo>(null);
+type TourContextValue = {
+  tour: TourState | null;
+  setTour: (value: TourState) => void;
+  clearTour: () => void;
+};
+
+const TourContext = createContext<TourContextValue | undefined>(undefined);
+
+export const TourProvider = ({ children }: { children: React.ReactNode }) => {
+  const [tour, setTourState] = useState<TourState | null>(null);
+
+  const setTour = (value: TourState) => setTourState(value);
+  const clearTour = () => setTourState(null);
 
   return (
-    <TourContext.Provider value={{ tour, setTour }}>
+    <TourContext.Provider value={{ tour, setTour, clearTour }}>
       {children}
     </TourContext.Provider>
   );
 };
 
-export const useTour = () => useContext(TourContext);
+export const useTour = () => {
+  const ctx = useContext(TourContext);
+  if (!ctx) {
+    throw new Error("useTour must be used within a TourProvider");
+  }
+  return ctx;
+};

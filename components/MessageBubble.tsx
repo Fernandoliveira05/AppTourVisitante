@@ -1,30 +1,71 @@
-import { View, Text, StyleSheet, Image } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ImageSourcePropType,
+} from "react-native";
+import Markdown from "react-native-markdown-display";
 
-export default function ChatBubble({ text, time, side = "left", avatar }: any) {
-  const isUser = side === "right";
+type Props = {
+  text: string;
+  time: string;
+  side: "left" | "right";
+  avatar: ImageSourcePropType;
+  status?: "normal" | "pending" | "error";
+  renderMarkdown?: boolean; // 👈 NOVO
+};
+
+export default function MessageBubble({
+  text,
+  time,
+  side,
+  avatar,
+  status = "normal",
+  renderMarkdown,
+}: Props) {
+  const isLeft = side === "left";
 
   return (
     <View
       style={[
-        styles.container,
-        isUser ? styles.rightContainer : styles.leftContainer,
+        styles.row,
+        isLeft ? styles.rowLeft : styles.rowRight,
       ]}
     >
-      {!isUser && avatar && (
+      {isLeft && (
         <Image source={avatar} style={styles.avatar} />
       )}
 
       <View
         style={[
           styles.bubble,
-          isUser ? styles.userBubble : styles.botBubble,
+          isLeft ? styles.bubbleLeft : styles.bubbleRight,
+          status === "error" && styles.bubbleError,
+          status === "pending" && styles.bubblePending,
         ]}
       >
-        <Text style={styles.text}>{text}</Text>
-        {time && <Text style={styles.time}>{time}</Text>}
+        {renderMarkdown ? (
+          <Markdown style={markdownStyles}>
+            {text}
+          </Markdown>
+        ) : (
+          <Text style={styles.text}>{text}</Text>
+        )}
+
+        <View style={styles.footerRow}>
+          <Text style={styles.time}>{time}</Text>
+          {status === "pending" && (
+            <Text style={styles.status}>aguardando…</Text>
+          )}
+          {status === "error" && (
+            <Text style={styles.status}>erro</Text>
+          )}
+        </View>
       </View>
 
-      {isUser && avatar && (
+      {!isLeft && (
         <Image source={avatar} style={styles.avatar} />
       )}
     </View>
@@ -32,45 +73,85 @@ export default function ChatBubble({ text, time, side = "left", avatar }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  row: {
     flexDirection: "row",
-    alignItems: "flex-end",
     marginVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
   },
-  leftContainer: {
+  rowLeft: {
     justifyContent: "flex-start",
   },
-  rightContainer: {
+  rowRight: {
     justifyContent: "flex-end",
   },
   avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     marginHorizontal: 6,
   },
   bubble: {
     maxWidth: "75%",
     borderRadius: 18,
-    padding: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
-  botBubble: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderBottomLeftRadius: 4,
+  bubbleLeft: {
+    backgroundColor: "#2B2340",
+    borderTopLeftRadius: 4,
   },
-  userBubble: {
-    backgroundColor: "#6A40C4",
-    borderBottomRightRadius: 4,
+  bubbleRight: {
+    backgroundColor: "#8141C2",
+    borderTopRightRadius: 4,
+  },
+  bubbleError: {
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
+  },
+  bubblePending: {
+    borderWidth: 1,
+    borderColor: "#FFD166",
   },
   text: {
-    color: "#fff",
-    fontSize: 18,
+    color: "#FFFFFF",
+    fontSize: 16,
   },
-  time: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.6)",
-    alignSelf: "flex-end",
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginTop: 4,
   },
+  time: {
+    color: "#B0A8C7",
+    fontSize: 10,
+    marginLeft: 8,
+  },
+  status: {
+    color: "#FFD166",
+    fontSize: 10,
+    marginLeft: 8,
+  },
 });
+
+const markdownStyles = {
+  body: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  strong: {
+    fontWeight: "700",
+  },
+  em: {
+    fontStyle: "italic",
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 4,
+  },
+  bullet_list: {
+    marginVertical: 4,
+  },
+  ordered_list: {
+    marginVertical: 4,
+  },
+} as const;

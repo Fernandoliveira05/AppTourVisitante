@@ -28,6 +28,10 @@ import { useTour } from "@/context/TourContext";
 import AccessCodeInput from "../../components/code";
 import { tourService } from "../../services/tourService";
 import { checkpointService } from "../../services/checkpointService";
+import {
+  getTourVisitanteByTourId,
+  getVisitanteById,
+} from "../../services/visitanteService";
 
 function randomPhoto(max: number) {
   return Math.floor(Math.random() * max);
@@ -58,17 +62,18 @@ export default function HomeScreen() {
     try {
       console.log("🔐 Tentando login com código:", code);
 
-      // 1) Login do tour (isso já funcionava antes)
+      // 1) Login do tour
       const data = await tourService.loginByCode(code);
+      const tour = data.tour;
 
       console.log("✅ Login bem-sucedido!");
-      console.log("📋 Tour:", data.tour);
-      console.log("👥 Visitantes:", data.visitantes);
+      console.log("📋 Tour:", tour);
+      console.log("👥 Visitantes (loginByCode):", data.visitantes);
 
       // 2) Buscar checkpoints do tour
       let checkpointId: number | null = null;
       try {
-        const checkpoints = await checkpointService.getByTourId(data.tour.id);
+        const checkpoints = await checkpointService.getByTourId(tour.id!);
         const currentCheckpoint = checkpointService.getCurrent(checkpoints);
 
         console.log("📍 Checkpoints:", checkpoints);
@@ -76,33 +81,64 @@ export default function HomeScreen() {
 
         checkpointId = currentCheckpoint?.id ?? null;
       } catch (err: any) {
-        console.log("⚠️ Erro ao buscar checkpoints. Seguindo sem checkpoint:", err?.message);
-        // Não derruba o login – só segue sem checkpoint
+        console.log(
+          "⚠️ Erro ao buscar checkpoints. Seguindo sem checkpoint:",
+          err?.message
+        );
         checkpointId = null;
       }
 
-      // 3) Salvar no contexto
+      // 3) Resolver nome do visitante
+      let visitorName = "Visitante";
+
+      try {
+        // GET /v1/tour-visitante/tour/{tourId}
+        const rel = await getTourVisitanteByTourId(tour.id!);
+        if (rel?.visitante_id) {
+          // GET /v1/visitante/{id}
+          const visitante = await getVisitanteById(rel.visitante_id);
+          if (visitante?.nome) {
+            visitorName = visitante.nome;
+          }
+        } else {
+          console.log(
+            "[login] Nenhum vínculo tour-visitante retornado, vou tentar fallback do loginByCode."
+          );
+        }
+      } catch (err) {
+        console.log(
+          "[login] Erro ao buscar tour-visitante/visitante, usando fallback:",
+          err
+        );
+      }
+
+      // Fallback: usar visitantes vindos do loginByCode, se existirem
+      if (
+        visitorName === "Visitante" &&
+        Array.isArray(data.visitantes) &&
+        data.visitantes.length > 0
+      ) {
+        visitorName = data.visitantes[0].nome || "Visitante";
+      }
+
+      console.log("🙋‍♀️ visitorName resolvido como:", visitorName);
+
+      // 4) Salvar no contexto global
       setTour({
-        tourId: data.tour.id,
-        roboId: data.tour.robo_id,
-        checkpointId, // pode ser null se não achou / deu 404
+        tourId: tour.id ?? null,
+        checkpointId,
+        visitorName,
       });
 
-      // 4) Nome do visitante
-      const visitorName =
-        data.visitantes.length > 0
-          ? data.visitantes[0].nome || "Visitante"
-          : "Visitante";
-
-      // 5) Navegar para onboarding
+      // 5) Navegar para onboarding / intro do chat
       router.push({
         pathname: "/(tabs)/onboarding",
         params: {
-          tourId: data.tour.id?.toString() || "",
-          tourCode: data.tour.codigo,
-          tourTitle: data.tour.titulo || "Tour",
+          tourId: tour.id?.toString() || "",
+          tourCode: tour.codigo,
+          tourTitle: tour.titulo || "Tour",
           visitorName: visitorName,
-          visitorCount: data.visitantes.length.toString(),
+          visitorCount: data.visitantes?.length?.toString() ?? "1",
         },
       });
     } catch (error: any) {
@@ -110,7 +146,7 @@ export default function HomeScreen() {
 
       let errorMessage = "Por favor, verifique o código de acesso.";
 
-      if (error?.message?.includes("Tour não encontrado")) {
+      if (error?.message === "Tour não encontrado com o código fornecido") {
         errorMessage = "Não encontramos um tour com este código.";
       } else if (error?.message?.includes("Erro de conexão")) {
         errorMessage = "Verifique sua conexão com a internet.";

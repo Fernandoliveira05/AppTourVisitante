@@ -10,7 +10,6 @@ export default function Emergencia() {
   const [scaleAnim] = useState(new Animated.Value(1));
 
   const handleAlertPress = () => {
-    // Animação de pressão
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.9,
@@ -24,7 +23,6 @@ export default function Emergencia() {
       }),
     ]).start();
 
-    // Log da emergência acionada
     console.log("🚨 EMERGÊNCIA ACIONADA - Tour interrompido, equipe Inteli notificada");
   };
 
@@ -32,14 +30,11 @@ export default function Emergencia() {
     <>
       <StatusBar hidden />
       <View style={styles.container}>
-        {/* Logo do Inteli no topo */}
         <View style={styles.header}>
           <Image source={Logo} style={styles.logo} resizeMode="contain" />
         </View>
 
-        {/* Conteúdo central */}
         <View style={styles.content}>
-          {/* Círculo roxo claro com botão vermelho */}
           <TouchableOpacity 
             activeOpacity={0.8}
             onPress={handleAlertPress}
@@ -54,16 +49,13 @@ export default function Emergencia() {
             </Animated.View>
           </TouchableOpacity>
 
-          {/* Título */}
           <Text style={styles.title}>DESEJA SOLICITAR A EMERGÊNCIA?</Text>
 
-          {/* Texto explicativo */}
           <Text style={styles.description}>
             Ao clicar neste ícone, o tour será interrompido e a equipe Inteli será acionada
           </Text>
         </View>
 
-        {/* Navbar */}
         <Navbar />
       </View>
     </>
@@ -89,8 +81,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 40,
-    paddingBottom: 60, // Espaço para a navbar
-    marginTop: -40, // Move o conteúdo para cima
+    paddingBottom: 60, 
+    marginTop: -40, 
   },
   buttonCircle: {
     width: 280,

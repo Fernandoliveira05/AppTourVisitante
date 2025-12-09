@@ -10,10 +10,11 @@ import Navbar from "@/components/navbar";
 
 import { useTour } from "@/context/TourContext";
 import {
-  createPergunta,
-  getRespostaByPerguntaId,
   getHistoricoChat,
+  getRespostaByPerguntaId,
+  askModelo,
   Pergunta,
+  Resposta,
 } from "@/api/chatService";
 
 export default function Home() {
@@ -26,7 +27,7 @@ export default function Home() {
   const numericTourId: number | null =
     tour?.tourId ?? (tourIdParam ? Number(tourIdParam) : null);
 
-  const numericCheckpointId: number | null = tour?.checkpointId ?? null;
+  const numericCheckpointId: number | null = tour?.checkpointId ?? 4;
 
   const formatTime = (iso: string | null | undefined) => {
     if (!iso) {
@@ -48,11 +49,14 @@ export default function Home() {
       minute: "2-digit",
     });
 
+ 
   useEffect(() => {
     const loadHistory = async () => {
       try {
         if (!numericTourId) {
-          console.log("⚠️ [CHAT] Sem tourId ainda, não dá pra carregar histórico.");
+          console.log(
+            "⚠️ [CHAT] Sem tourId ainda, não dá pra carregar histórico."
+          );
           return;
         }
 
@@ -63,9 +67,10 @@ export default function Home() {
 
         msgs.push({
           id: "welcome",
-          text: "Oi! Eu sou seu assistente do Inteli. Como posso te ajudar hoje?",
+          text: "Oi! Eu sou a LIA! Tem alguma dúvida sobre o",
           time: getCurrentTime(),
           side: "left",
+          renderMarkdown: true,
         });
 
         const perguntasDoTourAtual = historico.filter(
@@ -84,22 +89,42 @@ export default function Home() {
             side: "right",
           });
 
-          // try {
-          //   const resposta = await getRespostaByPerguntaId(pergunta.id);
-          //   if (resposta) {
-          //     msgs.push({
-          //       id: `r-${resposta.id}`,
-          //       text: resposta.texto,
-          //       time: formatTime(resposta.criado_em),
-          //       side: "left",
-          //     });
-          //   }
-          // } catch (err) {
-          //   console.log(
-          //     `⚠️ [CHAT] Erro ao buscar resposta da pergunta ${pergunta.id}:`,
-          //     err
-          //   );
-          // }
+          try {
+            const resposta: Resposta | null = await getRespostaByPerguntaId(
+              pergunta.id
+            );
+
+            if (resposta) {
+              msgs.push({
+                id: `r-${resposta.id}`,
+                text: resposta.texto,
+                time: formatTime(resposta.criado_em),
+                side: "left",
+                renderMarkdown: true,
+              });
+            } else {
+              msgs.push({
+                id: `r-pending-${pergunta.id}`,
+                text: "Essa pergunta ainda não foi respondida pela LIA.",
+                time: formatTime(null),
+                side: "left",
+                status: "pending",
+              });
+            }
+          } catch (err) {
+            console.log(
+              `⚠️ [CHAT] Erro ao buscar resposta da pergunta ${pergunta.id}:`,
+              err
+            );
+            msgs.push({
+              id: `r-error-${pergunta.id}`,
+              text:
+                "Tivemos um problema ao carregar a resposta desta pergunta. Ela pode aparecer aqui em breve.",
+              time: formatTime(null),
+              side: "left",
+              status: "error",
+            });
+          }
         }
 
         setMessages(msgs);
@@ -113,6 +138,7 @@ export default function Home() {
               "Não consegui carregar o histórico agora, mas você já pode me enviar perguntas normalmente.",
             time: getCurrentTime(),
             side: "left",
+            status: "error",
           },
         ]);
       }
@@ -121,59 +147,115 @@ export default function Home() {
     loadHistory();
   }, [numericTourId]);
 
-  const sendQuestionToBackend = async (userText: string) => {
-    try {
-      console.log("🚀 [CHAT] Enviando pergunta com:", {
-        tourId: numericTourId,
-        checkpointId: numericCheckpointId,
-      });
 
-      if (!numericTourId || !numericCheckpointId) {
+  const sendQuestionToBackend = async (userText: string) => {
+    console.log("🧠 [sendQuestionToBackend] Chamado com texto:", userText);
+    console.log("🧩 [sendQuestionToBackend] IDs atuais:", {
+      numericTourId,
+      numericCheckpointId,
+    });
+
+    try {
+      if (!numericTourId) {
+        console.warn(
+          "⚠️ [sendQuestionToBackend] Sem tourId, não tem como criar pergunta."
+        );
         const errorMessage: ChatMessage = {
           id: `no-tour-${Date.now()}`,
           text:
-            "Não encontrei o tour ou o checkpoint atual. Volte à tela inicial e entre novamente com o código, por favor.",
+            "Não encontrei o tour atual. Volte à tela inicial e entre novamente com o código, por favor. 🙏",
           time: getCurrentTime(),
           side: "left",
+          status: "error",
         };
         setMessages((prev) => [...prev, errorMessage]);
         return;
       }
 
-      const pergunta = await createPergunta({
-        texto: userText,
-        checkpoint_id: numericCheckpointId,
-        question_topic: null,
-        estado: "queued",
+      // 1️⃣ tenta usar o checkpoint do contexto
+      let checkpointIdToUse: number | null = numericCheckpointId;
+
+      // 2️⃣ se for null, tenta inferir pelo histórico
+      if (!checkpointIdToUse) {
+        console.log(
+          "[CHAT] checkpointId não definido, tentando inferir via histórico..."
+        );
+        try {
+          const historico: Pergunta[] = await getHistoricoChat();
+          const perguntasDoTourAtual = historico.filter(
+            (p) => p.tour_id === numericTourId
+          );
+
+          if (perguntasDoTourAtual.length > 0) {
+            const ultimaPergunta =
+              perguntasDoTourAtual[perguntasDoTourAtual.length - 1];
+            checkpointIdToUse = ultimaPergunta.checkpoint_id;
+            console.log(
+              "[CHAT] checkpoint_id inferido do histórico:",
+              checkpointIdToUse
+            );
+          } else {
+            console.log(
+              "[CHAT] Nenhuma pergunta anterior encontrada para este tour."
+            );
+          }
+        } catch (err) {
+          console.error(
+            "[CHAT] Erro ao tentar inferir checkpoint via histórico:",
+            err
+          );
+        }
+      }
+
+      // 3️⃣ se mesmo assim não tiver checkpoint, avisa e não chama o backend
+      if (!checkpointIdToUse) {
+        console.warn(
+          "⚠️ [sendQuestionToBackend] Continua sem checkpointId, não vou chamar o modelo."
+        );
+        const errorMessage: ChatMessage = {
+          id: `no-checkpoint-${Date.now()}`,
+          text:
+            "Não encontrei o checkpoint atual para este tour. Avise um monitor, por favor. 🙏",
+          time: getCurrentTime(),
+          side: "left",
+          status: "error",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        return;
+      }
+
+      // 4️⃣ Chama o modelo (porta 8000) - integração definitiva 🎯
+      const resposta = await askModelo({
         tour_id: numericTourId,
+        checkpoint_id: checkpointIdToUse,
+        question_topic: null,
+        texto: userText,
+        estado: "queued",
+        liberado_em: null,
+        respondido_em: null,
       });
 
-      // const resposta = await getRespostaByPerguntaId(pergunta.id);
+      console.log("✅ [sendQuestionToBackend] Resposta do modelo:", resposta);
 
-      // if (!resposta) {
-      //   console.log(
-      //     `⌛ [CHAT] Pergunta ${pergunta.id} ainda não possui resposta no backend.`
-      //   );
-      //   return;
-      // }
+      const botMessage: ChatMessage = {
+        id: `bot-${Date.now()}`,
+        text: resposta.texto,
+        time: formatTime(resposta.criado_em),
+        side: "left",
+        renderMarkdown: true,
+      };
 
-      // const botMessage: ChatMessage = {
-      //   id: `bot-${Date.now()}`,
-      //   text: resposta.texto,
-      //   time: getCurrentTime(),
-      //   side: "left",
-      // };
-
-      // setMessages((prev) => [...prev, botMessage]);
+      setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Erro ao falar com o backend:", error);
+      console.error("Erro ao falar com o backend/modelo:", error);
 
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
         text:
-          "Tive um problema para falar com o servidor agora. Pode tentar de novo daqui a pouco? 🙏",
+          "Tive um problema para falar com a LIA agora. Pode tentar de novo daqui a pouco? 🙏",
         time: getCurrentTime(),
         side: "left",
+        status: "error",
       };
 
       setMessages((prev) => [...prev, errorMessage]);

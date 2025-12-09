@@ -10,6 +10,8 @@ export type ChatMessage = {
   time: string;
   side: "left" | "right";
   avatar?: ImageSourcePropType;
+  status?: "normal" | "pending" | "error";
+  renderMarkdown?: boolean; // 👈 NOVO
 };
 
 type ChatAreaProps = {
@@ -29,11 +31,13 @@ export default function ChatArea({ messages }: ChatAreaProps) {
 
         return (
           <ChatBubble
-            key={msg.id}
+            key={String(msg.id)}
             text={msg.text}
             time={msg.time}
             side={msg.side}
             avatar={avatar}
+            status={msg.status}
+            renderMarkdown={msg.renderMarkdown} // 👈 passa adiante
           />
         );
       })}
@@ -47,6 +51,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingVertical: 10,
-    paddingBottom: 32,
+    paddingBottom: 402,
   },
 });
