@@ -21,7 +21,7 @@ const MAX_EXTRA_HEIGHT = 50;
 
 const BAR_CONFIGS = Array.from({ length: BARS_COUNT }, (_, i) => {
   const t = i / (BARS_COUNT - 1);
-  const base = Math.sin(t * Math.PI); // 0 → 1 → 0
+  const base = Math.sin(t * Math.PI); 
   return {
     base,
     delay: i * 60,
@@ -106,7 +106,6 @@ export default function VoiceButton({ onSendText }: VoiceButtonProps) {
 
   const inputRef = useRef<RNTextInput | null>(null);
 
-  // animação entre modos (0 = voice, 1 = text)
   const modeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
