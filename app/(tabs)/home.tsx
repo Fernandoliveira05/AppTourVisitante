@@ -1,19 +1,19 @@
-// app/(tabs)/home.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Image,
   View,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
+import LottieView from "lottie-react-native"; // <--- 1. IMPORTAR LOTTIE
 
 import Logo from "../../assets/images/logo-branca.png";
 import ChatArea, { ChatMessage } from "../../components/chatArea";
 import VoiceButton from "../../components/VoiceButton";
+import Navbar from "@/components/navbar"; 
 
 import { useTour } from "@/context/TourContext";
 import {
@@ -25,12 +25,20 @@ import {
 } from "@/api/chatService";
 
 const BG = "#1E1730";
+// <--- 2. IMPORTAR O ARQUIVO JSON
+const LoadingAnimation = require("../../assets/animations/loading.json");
 
 export default function Home() {
   const { tourId: tourIdParam } = useLocalSearchParams<{ tourId?: string }>();
   const { tour } = useTour();
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [keyboardHeight, setKeyboardHeight] = useState(0); // ✅
+  // <--- 3. ESTADO DE LOADING (Começa true para carregar logo de cara)
+  const [isLoading, setIsLoading] = useState(true); 
+  
+  // Controle do Teclado
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   const numericTourId: number | null =
     tour?.tourId ?? (tourIdParam ? Number(tourIdParam) : null);
@@ -56,27 +64,45 @@ export default function Home() {
       minute: "2-digit",
     });
 
+  // Listeners de Teclado
   useEffect(() => {
-    if (Platform.OS !== "android") return;
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      (e) => {
+        setKeyboardVisible(true);
+        if (Platform.OS === "android") {
+          setKeyboardHeight(e.endCoordinates.height);
+        }
+      }
+    );
 
-    const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
-      setKeyboardHeight(e.endCoordinates?.height ?? 0);
-    });
-
-    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardHeight(0);
-    });
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+        if (Platform.OS === "android") {
+          setKeyboardHeight(0);
+        }
+      }
+    );
 
     return () => {
-      showSub.remove();
-      hideSub.remove();
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
     };
   }, []);
 
+  // Carregar Histórico
   useEffect(() => {
     const loadHistory = async () => {
+      // Garante que o loading apareça ao iniciar a busca
+      setIsLoading(true);
+
       try {
-        if (!numericTourId) return;
+        if (!numericTourId) {
+            setIsLoading(false);
+            return;
+        }
 
         const historico: Pergunta[] = await getHistoricoChat();
         const msgs: ChatMessage[] = [];
@@ -133,13 +159,14 @@ export default function Home() {
             });
           }
         }
-
         setMessages(msgs);
       } catch (err) {
         console.error("Erro ao carregar histórico:", err);
+      } finally {
+        // <--- 4. FINALIZAR LOADING (Seja sucesso ou erro)
+        setIsLoading(false);
       }
     };
-
     loadHistory();
   }, [numericTourId]);
 
@@ -200,30 +227,6 @@ export default function Home() {
         behavior="padding"
         keyboardVerticalOffset={0}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <View style={styles.inner}>
-            <View style={styles.header}>
-              <Image source={Logo} style={styles.logo} resizeMode="contain" />
-            </View>
-
-            <View style={styles.body}>
-              <View style={styles.leftPane}>
-                <ChatArea messages={messages} />
-              </View>
-
-              <View style={styles.rightPane}>
-                <VoiceButton onSendText={handleSendText} />
-              </View>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    );
-  }
-
-  return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={[styles.container, { paddingBottom: keyboardHeight }]}>
         <View style={styles.inner}>
           <View style={styles.header}>
             <Image source={Logo} style={styles.logo} resizeMode="contain" />
@@ -231,16 +234,65 @@ export default function Home() {
 
           <View style={styles.body}>
             <View style={styles.leftPane}>
-              <ChatArea messages={messages} />
+              {/* <--- 5. RENDERIZAÇÃO CONDICIONAL DO LOADING */}
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <LottieView
+                    source={LoadingAnimation}
+                    autoPlay
+                    loop
+                    style={styles.lottie}
+                  />
+                </View>
+              ) : (
+                <ChatArea messages={messages} />
+              )}
             </View>
 
             <View style={styles.rightPane}>
               <VoiceButton onSendText={handleSendText} />
             </View>
           </View>
+          
+          {!isKeyboardVisible && <Navbar />}
         </View>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // Layout Android
+  return (
+    <View style={[styles.container, { paddingBottom: keyboardHeight }]}>
+      <View style={styles.inner}>
+        <View style={styles.header}>
+          <Image source={Logo} style={styles.logo} resizeMode="contain" />
+        </View>
+
+        <View style={styles.body}>
+          <View style={styles.leftPane}>
+            {/* <--- 5. RENDERIZAÇÃO CONDICIONAL DO LOADING (Android) */}
+            {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <LottieView
+                    source={LoadingAnimation}
+                    autoPlay
+                    loop
+                    style={styles.lottie}
+                  />
+                </View>
+              ) : (
+                <ChatArea messages={messages} />
+              )}
+          </View>
+
+          <View style={styles.rightPane}>
+            <VoiceButton onSendText={handleSendText} />
+          </View>
+        </View>
+        
+        {!isKeyboardVisible && <Navbar />}
       </View>
-    </TouchableWithoutFeedback>
+    </View>
   );
 }
 
@@ -271,10 +323,20 @@ const styles = StyleSheet.create({
   leftPane: {
     flex: 1.5,
     marginRight: 12,
+    justifyContent: 'center', 
   },
   rightPane: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lottie: {
+    width: 150,
+    height: 150,
   },
 });

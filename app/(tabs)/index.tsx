@@ -18,10 +18,15 @@ import {
 import Auditorio from "../../assets/images/Login/Auditório.jpg";
 import Casinhas from "../../assets/images/Login/Casinhas.jpg";
 import Frente from "../../assets/images/Login/Frente.jpg";
-import Letreiro from "../../assets/images/Login/Letreiro.jpeg";
-import Pessoas from "../../assets/images/Login/Pessoas.jpeg";
 import Refeitorio from "../../assets/images/Login/Refeitorio.jpg";
 import Logo from "../../assets/images/logo-branca.png";
+import Tour from "../../assets/images/AppTour.jpg";
+import Tour2 from "../../assets/images/AppTour2.jpg";
+import Tour3 from "../../assets/images/AppTour3.jpg";
+import Tour4 from "../../assets/images/AppTour4.jpg";
+import Tour5 from "../../assets/images/AppTour5.jpg";
+import Tour6 from "../../assets/images/AppTour6.jpg";
+import Tour7 from "../../assets/images/AppTour7.jpg";
 
 import { useTour } from "@/context/TourContext";
 
@@ -39,7 +44,7 @@ function randomPhoto(max: number) {
   return Math.floor(Math.random() * max);
 }
 
-const photos = [Casinhas, Auditorio, Frente, Letreiro, Pessoas, Refeitorio];
+const photos = [Casinhas, Auditorio, Tour, Tour2, Tour3, Tour4, Tour5, Tour6, Tour7, Refeitorio];
 const numberRandom = randomPhoto(photos.length);
 const photo = photos[numberRandom];
 

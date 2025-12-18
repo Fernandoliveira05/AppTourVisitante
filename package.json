@@ -11,6 +11,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@dudigital/react-native-zoomable-view": "^1.1.4",
     "@expo-google-fonts/manrope": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
     "@lottiefiles/dotlottie-react": "^0.17.10",
