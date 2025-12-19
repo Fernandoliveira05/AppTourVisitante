@@ -2,16 +2,13 @@ import Navbar from "@/components/navbar";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { Animated, Image, StyleSheet, Text, View } from "react-native";
-// 1. Importar a biblioteca de Zoom
 import { ReactNativeZoomableView } from '@dudigital/react-native-zoomable-view';
 
 const Logo = require("../../assets/images/logo-branca.png");
 const MapaTerreo = require("../../assets/images/mapa_terreo.png");
 
-// Estado do checkpoint
 type CheckpointState = "unvisited" | "visited" | "visiting";
 
-// Tipo do checkpoint
 interface Checkpoint {
   id: number;
   x: number; 
@@ -20,9 +17,9 @@ interface Checkpoint {
 }
 
 const MOCK_CHECKPOINTS: Checkpoint[] = [
-  { id: 1, x: 77, y: 50, state: "visited" },
-  { id: 2, x: 50, y: 47, state: "visited" },
-  { id: 3, x: 40, y: 38, state: "visiting" },
+  { id: 1, x: 77, y: 50, state: "visiting" },
+  { id: 2, x: 50, y: 47, state: "unvisited" },
+  { id: 3, x: 40, y: 38, state: "unvisited" },
   { id: 4, x: 14.5, y: 58, state: "unvisited" },
   { id: 5, x: 5, y: 28, state: "unvisited" },
 ];
