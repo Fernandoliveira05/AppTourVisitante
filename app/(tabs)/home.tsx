@@ -33,7 +33,6 @@ export default function Home() {
   const { tour } = useTour();
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  // <--- 3. ESTADO DE LOADING (Começa true para carregar logo de cara)
   const [isLoading, setIsLoading] = useState(true); 
   
   // Controle do Teclado
@@ -92,10 +91,8 @@ export default function Home() {
     };
   }, []);
 
-  // Carregar Histórico
   useEffect(() => {
     const loadHistory = async () => {
-      // Garante que o loading apareça ao iniciar a busca
       setIsLoading(true);
 
       try {

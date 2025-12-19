@@ -87,7 +87,7 @@ export default function HomeScreen() {
       
       setTimeout(() => {
         const mockTour = {
-          id: 9999, 
+          id: 4, 
           codigo: "FER",
           titulo: "Tour DEV! Apenas para testes",
         };
@@ -137,11 +137,11 @@ export default function HomeScreen() {
 
           await tourService.updateTour(tour.id, {
             ...tourDataWithoutId, 
-            status: 'inprogress', 
+            status: 'in_progress', 
             inicio_real: new Date().toISOString()
           });
           
-          tour.status = 'inprogress';
+          tour.status = 'in_progress';
           console.log("✅ Status atualizado com sucesso!");
         } catch (updateError) {
           console.error("⚠️ Erro ao atualizar status (prosseguindo login):", updateError);
